@@ -3553,25 +3553,26 @@ HTTPAPIServer::GenerateRequestClass::ExactMappingInput(
       // 1. iterate shape for fixed dimension to distribute 'element_cnt'.
       // 2. Set most inner dynamic shape to the remaining element count,
       //    other dynamic shape to be 1.
+      auto element_cnt_for_val = element_cnt;
       for (auto rit = shape_vec.rbegin(); rit != shape_vec.rend(); ++rit) {
         if (*rit != -1) {
-          if (element_cnt % *rit) {
+          if (element_cnt_for_val % *rit) {
             return TRITONSERVER_ErrorNew(
                 TRITONSERVER_ERROR_INVALID_ARG,
                 (std::string("The schema can not convert input '") + name +
                  "' to tensor with proper shape")
                     .c_str());
           }
-          element_cnt /= *rit;
+          element_cnt_for_val /= *rit;
         }
       }
       for (auto rit = shape_vec.rbegin(); rit != shape_vec.rend(); ++rit) {
         if (*rit == -1) {
-          *rit = element_cnt;
-          element_cnt = 1;
+          *rit = element_cnt_for_val;
+          element_cnt_for_val = 1;
         }
       }
-      if (element_cnt != 1) {
+      if (element_cnt_for_val != 1) {
         return TRITONSERVER_ErrorNew(
             TRITONSERVER_ERROR_INVALID_ARG,
             (std::string("The schema can not convert input '") + name +
